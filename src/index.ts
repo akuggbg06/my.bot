@@ -1,23 +1,27 @@
-// api/webhook.ts
-import { Bot, webhookCallback } from 'grammy';
+import { Bot, Api, Context } from 'grammy';
 
-// 1. Baca token (sesuai sama step 2)
 const token = process.env.BOT_TOKEN;
 if (!token) throw new Error('BOT_TOKEN is not set');
 
-// 2. Bikin bot-nya
 const bot = new Bot(token);
 
-// 3. Command start biar dia bisa jawab
 bot.command('start', async (ctx) => {
-  await ctx.reply('Halo! Bot kamu udah hidup dan siap dipake! ✅');
+  await ctx.reply('Halo! Handler manual sukses nih! ✅');
 });
 
-// 4. Command buat ngetes API (biar tau ini buat APK)
 bot.command('apikey', async (ctx) => {
   const url = `https://${process.env.VERCEL_URL}/api/validate`;
-  await ctx.reply(`Gunakan URL ini untuk APK-mu:\n${url}`);
+  await ctx.reply(`URL APK: ${url}`);
 });
 
-// 5. Ini biar Vercel bisa nerima pesanan dari Telegram
-export const POST = webhookCallback(bot, 'std/http');
+// INI HANDLER MANUALNYA
+export async function POST(request: Request) {
+  try {
+    const update = await request.json();
+    await bot.handleUpdate(update);
+    return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+  } catch (error) {
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ status: 'error' }), { status: 200 }); // Tetap 200 biar ga diulang terus
+  }
+}
